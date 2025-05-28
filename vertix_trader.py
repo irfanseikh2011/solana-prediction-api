@@ -12,6 +12,7 @@ import websocket # pip install websocket-client
 import json
 from datetime import datetime
 from shared import latest_prediction_data, data_lock
+from google.cloud import firestore
 import threading
 import queue # For inter-thread communication
 
@@ -363,6 +364,25 @@ class TradingPredictor:
 
         return is_correct
 
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/app/secrets/firebase-key.json"
+db = firestore.Client()
+collection_name = "solana_predictions"
+
+def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
+    try:
+        db.collection(collection_name).add({
+            "predictedPrice": predicted_price,
+            "prediction": prediction,
+            "timestamp": timestamp,
+            "actualPrice": actual_price,
+            "isCorrect": is_correct,
+            "outcome": outcome
+        })
+        print(f"✅ Saved to Firestore at {timestamp}")
+    except Exception as e:
+        print(f"❌ Error saving to Firestore: {e}")
+
 # --- Main Execution Loop ---
 def run_predictor():
     predictor = TradingPredictor()
@@ -434,6 +454,14 @@ def run_predictor():
                 latest_prediction_data["timestamp"] = datetime.utcnow().isoformat() + "Z"
                 latest_prediction_data["supply_zones"] = [[175.2, 176.5]]  # Placeholder
                 latest_prediction_data["demand_zones"] = [[169.0, 170.3]]
+
+
+            save_prediction_to_firestore(
+                predicted_price=current_close_price,
+                prediction=predicted_dir_label,
+                timestamp=latest_prediction_data["timestamp"]
+            )
+
 
 
             # Ensure we have enough data points in the buffer for feature calculation

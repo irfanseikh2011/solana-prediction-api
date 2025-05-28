@@ -8,3 +8,4 @@ websocket-client
 python-binance
 scikit-learn
 gunicorn
+google-cloud-firestore
