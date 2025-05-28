@@ -13,6 +13,7 @@ import json
 from datetime import datetime
 from shared import latest_prediction_data, data_lock
 from google.cloud import firestore
+from firebase_admin import credentials, firestore
 import threading
 import queue # For inter-thread communication
 
@@ -380,9 +381,9 @@ class TradingPredictor:
         return is_correct
 
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/etc/secrets/firebase-key.json"
-db = firestore.Client()
-collection_name = "solana_predictions"
+cred = credentials.Certificate("/etc/secrets/firebase-key.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
 # def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
 #     try:
