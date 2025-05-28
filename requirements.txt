@@ -7,3 +7,4 @@ xgboost
 websocket-client
 python-binance
 scikit-learn
+gunicorn
