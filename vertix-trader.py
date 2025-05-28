@@ -512,17 +512,17 @@ def start_api():
     app.run(host="0.0.0.0", port=5000, debug=False)
 
 # At the bottom, before run_predictor()
-# if __name__ == "__main__":
-    # flask_thread = Thread(target=start_api, daemon=True)
-    # flask_thread.start()
-
-    # run_predictor()
-
-
 if __name__ == "__main__":
-    # Start trading logic in background thread
-    thread = Thread(target=run_predictor, daemon=True)
-    thread.start()
+    flask_thread = Thread(target=start_api, daemon=True)
+    flask_thread.start()
+
+    run_predictor()
+
+
+# if __name__ == "__main__":
+#     # Start trading logic in background thread
+#     thread = Thread(target=run_predictor, daemon=True)
+#     thread.start()
 
 
 
