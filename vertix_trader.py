@@ -304,7 +304,9 @@ class TradingPredictor:
         print(f"Prediction: {direction} (Confidence: {prediction_proba.max():.2f})")
         
         # Return the raw numpy array of features used for this prediction
-        return prediction, direction, latest_features_series.values 
+        # return prediction, direction, latest_features_series.values 
+        return prediction, direction, latest_features_series.values, float(prediction_proba[prediction])
+
 
     def evaluate_prediction(self, predicted_time, predicted_direction_label, 
                             initial_pred_price, predicted_dir_int, 
@@ -420,12 +422,15 @@ def run_predictor():
             print(f"\n--- Processing new candle at {current_candle_start_time} (Close: {current_close_price}) ---")
             
             # 4. Make prediction using the updated buffer DataFrame
-            predicted_dir_int, predicted_dir_label, features_used_for_prediction = predictor.predict(current_klines_df)
+            # predicted_dir_int, predicted_dir_label, features_used_for_prediction = predictor.predict(current_klines_df)
+            predicted_dir_int, predicted_dir_label, features_used_for_prediction, predicted_confidence = predictor.predict(current_klines_df)
+
 
             with data_lock:
                 latest_prediction_data["price"] = current_close_price
                 latest_prediction_data["signal"] = predicted_dir_label
-                latest_prediction_data["confidence"] = float(100 if predicted_dir_int is not None else 0)  # You may replace this with actual confidence if you return it
+                # latest_prediction_data["confidence"] = float(100 if predicted_dir_int is not None else 0)  # You may replace this with actual confidence if you return it
+                latest_prediction_data["confidence"] = round(predicted_confidence * 100, 2) if predicted_confidence else 0
                 latest_prediction_data["timestamp"] = datetime.utcnow().isoformat() + "Z"
                 latest_prediction_data["supply_zones"] = [[175.2, 176.5]]  # Placeholder
                 latest_prediction_data["demand_zones"] = [[169.0, 170.3]]
