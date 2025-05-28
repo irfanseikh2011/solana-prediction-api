@@ -11,7 +11,7 @@ import warnings
 import websocket # pip install websocket-client
 import json
 from datetime import datetime
-from api import latest_prediction_data, data_lock
+# from api import latest_prediction_data, data_lock
 import threading
 import queue # For inter-thread communication
 
