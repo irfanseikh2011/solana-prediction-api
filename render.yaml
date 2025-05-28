@@ -22,3 +22,6 @@ services:
         sync: false
       - key: BINANCE_API_SECRET
         sync: false
+
+
+
