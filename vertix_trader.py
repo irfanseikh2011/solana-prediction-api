@@ -365,7 +365,7 @@ class TradingPredictor:
         return is_correct
 
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/app/secrets/firebase-key.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/etc/secrets/firebase-key.json"
 db = firestore.Client()
 collection_name = "solana_predictions"
 
