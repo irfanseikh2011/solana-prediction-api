@@ -1,12 +1,24 @@
 services:
   - type: web
-    name: solana-predictor-api
+    name: solana-api
     env: python
-    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -b 0.0.0.0:5000 vertix-trader:app
+    startCommand: python app.py
+    plan: free
     envVars:
       - key: BINANCE_API_KEY
-        value: j91ryzABGO6Fn9vDujiTofKfM4VKdWlDY9AWoheSuoR07HbiIF1hrz21eO0FrPsy
+        sync: false
       - key: BINANCE_API_SECRET
-        value: U2JV2rBL1MdrOyBkgmC5kJbwDVuY93ItbgshJZn5mbUH1Y8208HtlleTzQ6mFhBm
+        sync: false
+
+  - type: worker
+    name: solana-predictor
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python vertix-trader.py
+    plan: free
+    envVars:
+      - key: BINANCE_API_KEY
+        sync: false
+      - key: BINANCE_API_SECRET
+        sync: false

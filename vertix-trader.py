@@ -11,7 +11,7 @@ import warnings
 import websocket # pip install websocket-client
 import json
 from datetime import datetime
-# from api import latest_prediction_data, data_lock
+from app import latest_prediction_data, data_lock, start_api
 import threading
 import queue # For inter-thread communication
 
@@ -481,56 +481,8 @@ def run_predictor():
 
 
 
-
-from flask import Flask, jsonify
-from flask_cors import CORS
-from threading import Lock, Thread
-
-app = Flask(__name__)
-CORS(app)
-
-latest_prediction_data = {
-    "price": None,
-    "signal": None,
-    "confidence": None,
-    "timestamp": None,
-    "supply_zones": [],
-    "demand_zones": []
-}
-data_lock = Lock()
-
-
-@app.route("/predict", methods=["GET"])
-def get_prediction():
-    with data_lock:
-        if latest_prediction_data["price"] is None:
-            return jsonify({"error": "Prediction not available yet"}), 503
-        return jsonify(latest_prediction_data)
-
-
-def start_api():
-    app.run(host="0.0.0.0", port=5000, debug=False)
-
-# At the bottom, before run_predictor()
 if __name__ == "__main__":
-    flask_thread = Thread(target=start_api, daemon=True)
+    flask_thread = threading.Thread(target=start_api, daemon=True)
     flask_thread.start()
 
     run_predictor()
-
-
-# if __name__ == "__main__":
-#     # Start trading logic in background thread
-#     thread = Thread(target=run_predictor, daemon=True)
-#     thread.start()
-
-
-
-
-# if __name__ == "__main__":
-#     if API_KEY is None or API_SECRET is None:
-#         print("Error: BINANCE_API_KEY or BINANCE_API_SECRET environment variables not set.")
-#         print("Please set them before running the script.")
-#         exit()
-    
-#     run_predictor()
