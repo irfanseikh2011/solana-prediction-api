@@ -13,6 +13,7 @@ import json
 from datetime import datetime
 from shared import latest_prediction_data, data_lock
 from google.cloud import firestore
+import firebase_admin
 from firebase_admin import credentials, firestore
 import threading
 import queue # For inter-thread communication
