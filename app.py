@@ -41,7 +41,7 @@
 
 from flask import Flask, jsonify
 import threading
-from vertix_trader import run_predictor  # Import your loop
+from vertix-trader import run_predictor  # Import your loop
 
 app = Flask(__name__)
 
