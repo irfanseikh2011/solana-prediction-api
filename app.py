@@ -37,19 +37,22 @@
 #     start_api()
 
 
-
-
 from flask import Flask, jsonify
+from shared import latest_prediction_data, data_lock
 import threading
-from vertix_trader import run_predictor  # Import your loop
+from vertix_trader import run_predictor
 
 app = Flask(__name__)
 
 @app.route("/health")
 def health():
-    return jsonify(status="ok")
+    return {"status": "ok"}
 
-# Start predictor in background
+@app.route("/prediction")
+def prediction():
+    with data_lock:
+        return latest_prediction_data
+
 def start_background_worker():
     thread = threading.Thread(target=run_predictor, daemon=True)
     thread.start()

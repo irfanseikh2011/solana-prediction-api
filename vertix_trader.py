@@ -11,7 +11,7 @@ import warnings
 import websocket # pip install websocket-client
 import json
 from datetime import datetime
-from app import latest_prediction_data, data_lock, start_api
+from shared import latest_prediction_data, data_lock
 import threading
 import queue # For inter-thread communication
 
@@ -481,8 +481,8 @@ def run_predictor():
 
 
 
-if __name__ == "__main__":
-    flask_thread = threading.Thread(target=start_api, daemon=True)
-    flask_thread.start()
+# if __name__ == "__main__":
+#     flask_thread = threading.Thread(target=start_api, daemon=True)
+#     flask_thread.start()
 
-    run_predictor()
+#     run_predictor()
