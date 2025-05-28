@@ -1,0 +1,9 @@
+flask
+flask-cors
+ta
+pandas
+numpy
+xgboost
+websocket-client
+python-binance
+scikit-learn
