@@ -362,6 +362,21 @@ class TradingPredictor:
             
         print(f"Total Predictions: {self.predictions_made}, Correct: {self.correct_predictions}, Accuracy: {current_accuracy:.2f}%")
 
+        data_to_store = {
+            "actualPrice": float(actual_close_price),
+            "predictedPrice": float(initial_pred_price),
+            "prediction": predicted_direction_label,
+            "timestamp": predicted_time.isoformat() + "Z",
+            "isCorrect": is_correct,
+            "outcome": (
+                "LONG" if actual_outcome_int == 1 else 
+                "SHORT" if actual_outcome_int == 0 else 
+                "NEUTRAL"
+            )
+        }
+
+        push_prediction_result_to_firestore(data_to_store)
+
         return is_correct
 
 
@@ -369,19 +384,29 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/etc/secrets/firebase-key.json"
 db = firestore.Client()
 collection_name = "solana_predictions"
 
-def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
+# def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
+#     try:
+#         db.collection(collection_name).add({
+#             "predictedPrice": predicted_price,
+#             "prediction": prediction,
+#             "timestamp": timestamp,
+#             "actualPrice": actual_price,
+#             "isCorrect": is_correct,
+#             "outcome": outcome
+#         })
+#         print(f"✅ Saved to Firestore at {timestamp}")
+#     except Exception as e:
+#         print(f"❌ Error saving to Firestore: {e}")
+
+
+def push_prediction_result_to_firestore(data):
     try:
-        db.collection(collection_name).add({
-            "predictedPrice": predicted_price,
-            "prediction": prediction,
-            "timestamp": timestamp,
-            "actualPrice": actual_price,
-            "isCorrect": is_correct,
-            "outcome": outcome
-        })
-        print(f"✅ Saved to Firestore at {timestamp}")
+        doc_ref = db.collection("solana_predictions").document()  # Creates a new document
+        doc_ref.set(data)
+        print("📤 Sent prediction to Firestore.")
     except Exception as e:
-        print(f"❌ Error saving to Firestore: {e}")
+        print(f"🔥 Firestore write failed: {e}")
+
 
 # --- Main Execution Loop ---
 def run_predictor():
@@ -456,11 +481,11 @@ def run_predictor():
                 latest_prediction_data["demand_zones"] = [[169.0, 170.3]]
 
 
-            save_prediction_to_firestore(
-                predicted_price=current_close_price,
-                prediction=predicted_dir_label,
-                timestamp=latest_prediction_data["timestamp"]
-            )
+            # save_prediction_to_firestore(
+            #     predicted_price=current_close_price,
+            #     prediction=predicted_dir_label,
+            #     timestamp=latest_prediction_data["timestamp"]
+            # )
 
 
 
