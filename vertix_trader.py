@@ -202,18 +202,18 @@ class TradingPredictor:
         
         
     def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
-    try:
-        db.collection(collection_name).add({
-            "predictedPrice": predicted_price,
-            "prediction": prediction,
-            "timestamp": timestamp,
-            "actualPrice": actual_price,
-            "isCorrect": is_correct,
-            "outcome": outcome
-        })
-        print(f"✅ Saved to Firestore at {timestamp}")
-    except Exception as e:
-        print(f"❌ Error saving to Firestore: {e}")
+        try:
+            db.collection(collection_name).add({
+                "predictedPrice": predicted_price,
+                "prediction": prediction,
+                "timestamp": timestamp,
+                "actualPrice": actual_price,
+                "isCorrect": is_correct,
+                "outcome": outcome
+            })
+            print(f"✅ Saved to Firestore at {timestamp}")
+        except Exception as e:
+            print(f"❌ Error saving to Firestore: {e}")
 
     def prepare_data(self, df):
         """Prepare features and target for training/prediction."""
