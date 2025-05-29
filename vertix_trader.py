@@ -59,6 +59,24 @@ def get_historical_klines(symbol, interval, lookback_days):
     df.set_index('Open Time', inplace=True)
     return df[['Open', 'High', 'Low', 'Close', 'Volume']]
 
+ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/etc/secrets/firebase-key.json"
+    db = firestore.Client()
+    collection_name = "solana_predictions"
+
+def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
+    try:
+        db.collection(collection_name).add({
+            "predictedPrice": predicted_price,
+            "prediction": prediction,
+            "timestamp": timestamp,
+            "actualPrice": actual_price,
+            "isCorrect": is_correct,
+            "outcome": outcome
+        })
+        print(f"✅ Saved to Firestore at {timestamp}")
+    except Exception as e:
+        print(f"❌ Error saving to Firestore: {e}")
+
 def get_specific_kline(symbol, interval, start_time):
     """Fetches a specific kline that starts at or after start_time."""
     
@@ -311,24 +329,6 @@ class TradingPredictor:
         # return prediction, direction, latest_features_series.values 
         return prediction, direction, latest_features_series.values, float(prediction_proba[prediction])
 
-
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/etc/secrets/firebase-key.json"
-    db = firestore.Client()
-    collection_name = "solana_predictions"
-
-    def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
-        try:
-            db.collection(collection_name).add({
-                "predictedPrice": predicted_price,
-                "prediction": prediction,
-                "timestamp": timestamp,
-                "actualPrice": actual_price,
-                "isCorrect": is_correct,
-                "outcome": outcome
-            })
-            print(f"✅ Saved to Firestore at {timestamp}")
-        except Exception as e:
-            print(f"❌ Error saving to Firestore: {e}")
 
 
     def evaluate_prediction(self, predicted_time, predicted_direction_label, 
