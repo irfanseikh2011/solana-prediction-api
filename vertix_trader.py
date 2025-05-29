@@ -19,8 +19,11 @@ import queue # For inter-thread communication
 warnings.filterwarnings('ignore') # Suppress warnings
 
 # --- Configuration ---
-API_KEY = os.environ.get('BINANCE_API_KEY')
-API_SECRET = os.environ.get('BINANCE_API_SECRET')
+# API_KEY = os.environ.get('BINANCE_API_KEY')
+# API_SECRET = os.environ.get('BINANCE_API_SECRET')
+API_KEY = 'j91ryzABGO6Fn9vDujiTofKfM4VKdWlDY9AWoheSuoR07HbiIF1hrz21eO0FrPsy'
+API_SECRET = 'U2JV2rBL1MdrOyBkgmC5kJbwDVuY93ItbgshJZn5mbUH1Y8208HtlleTzQ6mFhBm'
+
 SYMBOL = 'SOLUSDT'
 INTERVAL = Client.KLINE_INTERVAL_1MINUTE
 LOOKBACK_HISTORY_DAYS_INITIAL_TRAIN = 30 # For initial training
@@ -397,11 +400,14 @@ class TradingPredictor:
         # push_prediction_result_to_firestore(data_to_store)
 
         save_prediction_to_firestore(
-                predicted_price=current_close_price,
-                actual_price=initial_pred_price,
-                prediction=predicted_dir_label,
-                timestamp=latest_prediction_data["timestamp"]
-            )    
+            predicted_price=initial_pred_price,
+            actual_price=actual_close_price,
+            prediction=predicted_direction_label,
+            timestamp=latest_prediction_data["timestamp"],
+            is_correct=is_correct,
+            outcome="LONG" if actual_outcome_int == 1 else "SHORT"
+        )
+    
 
         return is_correct
 
