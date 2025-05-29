@@ -64,20 +64,6 @@ def get_historical_klines(symbol, interval, lookback_days):
     return df[['Open', 'High', 'Low', 'Close', 'Volume']]
 
 
-def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
-    try:
-        db.collection(collection_name).add({
-            "predictedPrice": predicted_price,
-            "prediction": prediction,
-            "timestamp": timestamp,
-            "actualPrice": actual_price,
-            "isCorrect": is_correct,
-            "outcome": outcome
-        })
-        print(f"✅ Saved to Firestore at {timestamp}")
-    except Exception as e:
-        print(f"❌ Error saving to Firestore: {e}")
-
 def get_specific_kline(symbol, interval, start_time):
     """Fetches a specific kline that starts at or after start_time."""
     
@@ -213,6 +199,21 @@ class TradingPredictor:
         self.recent_outcomes_buffer = deque(maxlen=RECENT_OUTCOMES_BUFFER_SIZE)
         self.predictions_made = 0
         self.correct_predictions = 0
+        
+        
+    def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
+    try:
+        db.collection(collection_name).add({
+            "predictedPrice": predicted_price,
+            "prediction": prediction,
+            "timestamp": timestamp,
+            "actualPrice": actual_price,
+            "isCorrect": is_correct,
+            "outcome": outcome
+        })
+        print(f"✅ Saved to Firestore at {timestamp}")
+    except Exception as e:
+        print(f"❌ Error saving to Firestore: {e}")
 
     def prepare_data(self, df):
         """Prepare features and target for training/prediction."""
@@ -400,7 +401,7 @@ class TradingPredictor:
 
         # push_prediction_result_to_firestore(data_to_store)
 
-        save_prediction_to_firestore(
+        self.save_prediction_to_firestore(
             predicted_price=initial_pred_price,
             actual_price=actual_close_price,
             prediction=predicted_direction_label,
