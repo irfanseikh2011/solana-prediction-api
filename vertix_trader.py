@@ -24,6 +24,10 @@ warnings.filterwarnings('ignore') # Suppress warnings
 API_KEY = 'j91ryzABGO6Fn9vDujiTofKfM4VKdWlDY9AWoheSuoR07HbiIF1hrz21eO0FrPsy'
 API_SECRET = 'U2JV2rBL1MdrOyBkgmC5kJbwDVuY93ItbgshJZn5mbUH1Y8208HtlleTzQ6mFhBm'
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/etc/secrets/firebase-key.json"
+db = firestore.Client()
+collection_name = "solana_predictions"
+
 SYMBOL = 'SOLUSDT'
 INTERVAL = Client.KLINE_INTERVAL_1MINUTE
 LOOKBACK_HISTORY_DAYS_INITIAL_TRAIN = 30 # For initial training
@@ -59,9 +63,6 @@ def get_historical_klines(symbol, interval, lookback_days):
     df.set_index('Open Time', inplace=True)
     return df[['Open', 'High', 'Low', 'Close', 'Volume']]
 
- os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/etc/secrets/firebase-key.json"
-    db = firestore.Client()
-    collection_name = "solana_predictions"
 
 def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
     try:
