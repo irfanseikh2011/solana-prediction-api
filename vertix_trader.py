@@ -251,9 +251,7 @@ class TradingPredictor:
             else:
                 df_processed[col] = df_processed[col].fillna(0) # Fill NaNs within identified features
 
-        # Drop rows with NaN if they occur after feature engineering due to lookback that couldn't be filled
-        # We also need to drop NaNs in the target column if present
-        # This step is important if features have NaNs at the beginning of the dataframe
+     
         df_processed.dropna(subset=self.feature_columns, inplace=True)
         
         return df_processed
@@ -274,8 +272,7 @@ class TradingPredictor:
             self.model = None # Reset model if no data
             return
 
-        # Scale features
-        # CORRECTED: Use self.fitted_scaler flag consistently
+   
         if not self.fitted_scaler: 
             self.scaler.fit(X)
             self.fitted_scaler = True 
@@ -355,9 +352,6 @@ class TradingPredictor:
                             features_at_prediction_time): # This argument now holds the features array
         """Evaluates a past prediction."""
         
-        # Calculate the target kline's expected start time
-        # The prediction is for the close price *after* the current candle closes (which is already done)
-        # So, the 5m target is the candle starting at predicted_time + 5 minutes
         target_kline_start_time = predicted_time + pd.Timedelta(minutes=3)
         
         # Wait until the target kline should have closed
@@ -405,9 +399,9 @@ class TradingPredictor:
 
         self.save_prediction_to_firestore(
             predicted_price=initial_pred_price,
-            actual_price=actual_close_price,
             prediction=predicted_direction_label,
             timestamp=latest_prediction_data["timestamp"],
+            actual_price=actual_close_price,
             is_correct=is_correct,
             outcome="LONG" if actual_outcome_int == 1 else "SHORT"
         )
