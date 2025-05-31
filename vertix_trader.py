@@ -172,21 +172,38 @@ def add_features(df):
     return df
 
 # --- 3. Target Variable Creation ---
+# def create_target(df):
+#     """Creates the target variable for the next 5 minutes."""
+#     df['future_close_5m'] = df['Close'].shift(-5)
+#     df['price_change_5m'] = (df['future_close_5m'] - df['Close']) / df['Close']
+
+#     df['target'] = np.nan
+#     df.loc[df['price_change_5m'] > PROFIT_THRESHOLD_PC, 'target'] = 1  # LONG
+#     df.loc[df['price_change_5m'] < -PROFIT_THRESHOLD_PC, 'target'] = 0 # SHORT
+
+#     # Drop rows where target is NaN (neutral movements)
+#     df.dropna(subset=['target'], inplace=True)
+#     df['target'] = df['target'].astype(int) # Convert to int
+
+#     # Drop future-looking columns before returning
+#     df.drop(columns=['future_close_5m', 'price_change_5m'], inplace=True, errors='ignore')
+#     return df
+
 def create_target(df):
-    """Creates the target variable for the next 5 minutes."""
-    df['future_close_5m'] = df['Close'].shift(-5)
-    df['price_change_5m'] = (df['future_close_5m'] - df['Close']) / df['Close']
+    """Creates the target variable for the next 3 minutes."""
+    df['future_close_3m'] = df['Close'].shift(-3)  # Change from -5 to -3
+    df['price_change_3m'] = (df['future_close_3m'] - df['Close']) / df['Close']
 
     df['target'] = np.nan
-    df.loc[df['price_change_5m'] > PROFIT_THRESHOLD_PC, 'target'] = 1  # LONG
-    df.loc[df['price_change_5m'] < -PROFIT_THRESHOLD_PC, 'target'] = 0 # SHORT
+    df.loc[df['price_change_3m'] > PROFIT_THRESHOLD_PC, 'target'] = 1  # LONG
+    df.loc[df['price_change_3m'] < -PROFIT_THRESHOLD_PC, 'target'] = 0 # SHORT
 
     # Drop rows where target is NaN (neutral movements)
     df.dropna(subset=['target'], inplace=True)
-    df['target'] = df['target'].astype(int) # Convert to int
+    df['target'] = df['target'].astype(int)
 
     # Drop future-looking columns before returning
-    df.drop(columns=['future_close_5m', 'price_change_5m'], inplace=True, errors='ignore')
+    df.drop(columns=['future_close_3m', 'price_change_3m'], inplace=True, errors='ignore')
     return df
 
 # --- 4. Model Training and Prediction ---
@@ -201,7 +218,7 @@ class TradingPredictor:
         self.correct_predictions = 0
         
         
-    def save_prediction_to_firestore(predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
+    def save_prediction_to_firestore(self,predicted_price, prediction, timestamp, actual_price=None, is_correct=None, outcome="NEUTRAL"):
         try:
             db.collection(collection_name).add({
                 "predictedPrice": predicted_price,
@@ -333,49 +350,122 @@ class TradingPredictor:
 
 
 
+    # def evaluate_prediction(self, predicted_time, predicted_direction_label, 
+    #                         initial_pred_price, predicted_dir_int, 
+    #                         features_at_prediction_time): # This argument now holds the features array
+    #     """Evaluates a past prediction."""
+        
+    #     # Calculate the target kline's expected start time
+    #     # The prediction is for the close price *after* the current candle closes (which is already done)
+    #     # So, the 5m target is the candle starting at predicted_time + 5 minutes
+    #     target_kline_start_time = predicted_time + pd.Timedelta(minutes=5)
+        
+    #     # Wait until the target kline should have closed
+    #     wait_for_secs = (target_kline_start_time + pd.Timedelta(minutes=1, seconds=10)).timestamp() - time.time()
+    #     if wait_for_secs > 0:
+    #         print(f"Waiting {int(wait_for_secs)} seconds for 5-minute outcome kline {target_kline_start_time.strftime('%H:%M')} to close...")
+    #         time.sleep(wait_for_secs)
+
+    #     # Fetch the specific target kline using REST API
+    #     target_kline = get_specific_kline(SYMBOL, INTERVAL, target_kline_start_time)
+
+    #     if target_kline is None:
+    #         print(f"Error: Could not retrieve 5-minute outcome kline for {target_kline_start_time}. Skipping evaluation and buffer update.")
+    #         return False # Indicate failure
+
+    #     actual_close_price = target_kline['Close']
+    #     actual_price_change = (actual_close_price - initial_pred_price) / initial_pred_price
+
+    #     # Determine actual outcome based on profit threshold
+    #     actual_outcome_int = np.nan
+    #     if actual_price_change > PROFIT_THRESHOLD_PC:
+    #         actual_outcome_int = 1 # LONG
+    #     elif actual_price_change < -PROFIT_THRESHOLD_PC:
+    #         actual_outcome_int = 0 # SHORT
+    #     else:
+    #         actual_outcome_int = 1 if actual_price_change >= 0 else 0 # Simplified binary, close to neutral counts as non-predicted direction
+
+    #     is_correct = (predicted_dir_int == actual_outcome_int)
+        
+    #     # Add to buffer if a clear outcome that matches our target definition occurred
+    #     if not np.isnan(actual_outcome_int):
+    #         self.recent_outcomes_buffer.append((features_at_prediction_time, actual_outcome_int))
+    #     else:
+    #         print("Evaluation: Outcome was too neutral, not added to retraining buffer.")
+            
+    #     self.predictions_made += 1
+    #     current_accuracy = (self.correct_predictions / self.predictions_made) * 100
+    #     if is_correct:
+    #         self.correct_predictions += 1
+    #         print(f"  Outcome: Correct! (Predicted: {predicted_direction_label}, Actual: {'LONG' if actual_outcome_int == 1 else 'SHORT'}, Change: {actual_price_change:.4%})")
+    #     else:
+    #         print(f"  Outcome: Incorrect! (Predicted: {predicted_direction_label}, Actual: {'LONG' if actual_outcome_int == 1 else 'SHORT'}, Change: {actual_price_change:.4%})")
+            
+    #     print(f"Total Predictions: {self.predictions_made}, Correct: {self.correct_predictions}, Accuracy: {current_accuracy:.2f}%")
+
+    #     # data_to_store = {
+    #     #     "actualPrice": float(actual_close_price),
+    #     #     "predictedPrice": float(initial_pred_price),
+    #     #     "prediction": predicted_direction_label,
+    #     #     "timestamp": predicted_time.isoformat() + "Z",
+    #     #     "isCorrect": is_correct,
+    #     #     "outcome": (
+    #     #         "LONG" if actual_outcome_int == 1 else 
+    #     #         "SHORT" if actual_outcome_int == 0 else 
+    #     #         "NEUTRAL"
+    #     #     )
+    #     # }
+
+    #     # push_prediction_result_to_firestore(data_to_store)
+
+    #     self.save_prediction_to_firestore(
+    #         predicted_price=initial_pred_price,
+    #         actual_price=actual_close_price,
+    #         prediction=predicted_direction_label,
+    #         timestamp=latest_prediction_data["timestamp"],
+    #         is_correct=is_correct,
+    #         outcome="LONG" if actual_outcome_int == 1 else "SHORT"
+    #     )
+    
+
+    #     return is_correct
+    
     def evaluate_prediction(self, predicted_time, predicted_direction_label, 
-                            initial_pred_price, predicted_dir_int, 
-                            features_at_prediction_time): # This argument now holds the features array
-        """Evaluates a past prediction."""
-        
-        # Calculate the target kline's expected start time
-        # The prediction is for the close price *after* the current candle closes (which is already done)
-        # So, the 5m target is the candle starting at predicted_time + 5 minutes
-        target_kline_start_time = predicted_time + pd.Timedelta(minutes=5)
-        
-        # Wait until the target kline should have closed
-        wait_for_secs = (target_kline_start_time + pd.Timedelta(minutes=1, seconds=10)).timestamp() - time.time()
+                        initial_pred_price, predicted_dir_int, 
+                        features_at_prediction_time):
+    """Evaluates a past prediction after 3 minutes."""
+    
+        target_kline_start_time = predicted_time + pd.Timedelta(minutes=3)  # Change from 5 to 3
+
+  # Wait until the 3-minute target candle fully closes
+        wait_for_secs = (target_kline_start_time + pd.Timedelta(minutes=3, seconds=10)).timestamp() - time.time()
         if wait_for_secs > 0:
-            print(f"Waiting {int(wait_for_secs)} seconds for 5-minute outcome kline {target_kline_start_time.strftime('%H:%M')} to close...")
+            print(f"Waiting {int(wait_for_secs)} seconds for 3-minute outcome kline {target_kline_start_time.strftime('%H:%M')} to close...")
             time.sleep(wait_for_secs)
 
-        # Fetch the specific target kline using REST API
+    # Fetch the specific target kline
         target_kline = get_specific_kline(SYMBOL, INTERVAL, target_kline_start_time)
 
         if target_kline is None:
-            print(f"Error: Could not retrieve 5-minute outcome kline for {target_kline_start_time}. Skipping evaluation and buffer update.")
-            return False # Indicate failure
+            print(f"Error: Could not retrieve 3-minute outcome kline for {target_kline_start_time}. Skipping evaluation and buffer update.")
+            return False
 
         actual_close_price = target_kline['Close']
         actual_price_change = (actual_close_price - initial_pred_price) / initial_pred_price
 
-        # Determine actual outcome based on profit threshold
         actual_outcome_int = np.nan
         if actual_price_change > PROFIT_THRESHOLD_PC:
-            actual_outcome_int = 1 # LONG
+            actual_outcome_int = 1
         elif actual_price_change < -PROFIT_THRESHOLD_PC:
-            actual_outcome_int = 0 # SHORT
+            actual_outcome_int = 0
         else:
-            actual_outcome_int = 1 if actual_price_change >= 0 else 0 # Simplified binary, close to neutral counts as non-predicted direction
+            actual_outcome_int = 1 if actual_price_change >= 0 else 0
 
         is_correct = (predicted_dir_int == actual_outcome_int)
-        
-        # Add to buffer if a clear outcome that matches our target definition occurred
+
         if not np.isnan(actual_outcome_int):
             self.recent_outcomes_buffer.append((features_at_prediction_time, actual_outcome_int))
-        else:
-            print("Evaluation: Outcome was too neutral, not added to retraining buffer.")
-            
+
         self.predictions_made += 1
         current_accuracy = (self.correct_predictions / self.predictions_made) * 100
         if is_correct:
@@ -383,23 +473,8 @@ class TradingPredictor:
             print(f"  Outcome: Correct! (Predicted: {predicted_direction_label}, Actual: {'LONG' if actual_outcome_int == 1 else 'SHORT'}, Change: {actual_price_change:.4%})")
         else:
             print(f"  Outcome: Incorrect! (Predicted: {predicted_direction_label}, Actual: {'LONG' if actual_outcome_int == 1 else 'SHORT'}, Change: {actual_price_change:.4%})")
-            
+        
         print(f"Total Predictions: {self.predictions_made}, Correct: {self.correct_predictions}, Accuracy: {current_accuracy:.2f}%")
-
-        # data_to_store = {
-        #     "actualPrice": float(actual_close_price),
-        #     "predictedPrice": float(initial_pred_price),
-        #     "prediction": predicted_direction_label,
-        #     "timestamp": predicted_time.isoformat() + "Z",
-        #     "isCorrect": is_correct,
-        #     "outcome": (
-        #         "LONG" if actual_outcome_int == 1 else 
-        #         "SHORT" if actual_outcome_int == 0 else 
-        #         "NEUTRAL"
-        #     )
-        # }
-
-        # push_prediction_result_to_firestore(data_to_store)
 
         self.save_prediction_to_firestore(
             predicted_price=initial_pred_price,
@@ -409,21 +484,10 @@ class TradingPredictor:
             is_correct=is_correct,
             outcome="LONG" if actual_outcome_int == 1 else "SHORT"
         )
-    
 
         return is_correct
 
 
-
-
-
-# def push_prediction_result_to_firestore(data):
-#     try:
-#         doc_ref = db.collection("solana_predictions").document()  # Creates a new document
-#         doc_ref.set(data)
-#         print("📤 Sent prediction to Firestore.")
-#     except Exception as e:
-#         print(f"🔥 Firestore write failed: {e}")
 
 
 # --- Main Execution Loop ---
@@ -492,7 +556,6 @@ def run_predictor():
             with data_lock:
                 latest_prediction_data["price"] = current_close_price
                 latest_prediction_data["signal"] = predicted_dir_label
-                # latest_prediction_data["confidence"] = float(100 if predicted_dir_int is not None else 0)  # You may replace this with actual confidence if you return it
                 latest_prediction_data["confidence"] = round(predicted_confidence * 100, 2) if predicted_confidence else 0
                 latest_prediction_data["timestamp"] = datetime.utcnow().isoformat() + "Z"
                 latest_prediction_data["supply_zones"] = [[175.2, 176.5]]  # Placeholder
